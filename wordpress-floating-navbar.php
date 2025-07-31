@@ -693,6 +693,16 @@ class TirtonicAdvancedFloatingNavbar {
                                             </td>
                                         </tr>
                                         <tr>
+                                            <th scope="row">Header Position</th>
+                                            <td>
+                                                <select name="mobile_position" class="regular-text">
+                                                    <option value="bottom" <?php selected($this->options['mobile_position'] ?? 'bottom', 'bottom'); ?>>Bottom</option>
+                                                    <option value="top" <?php selected($this->options['mobile_position'] ?? 'bottom', 'top'); ?>>Top</option>
+                                                </select>
+                                                <p class="description">Position of navbar header on mobile devices</p>
+                                            </td>
+                                        </tr>
+                                        <tr>
                                             <th scope="row">Full Width on Mobile</th>
                                             <td>
                                                 <label class="tirtonic-toggle">
@@ -1953,7 +1963,7 @@ class TirtonicAdvancedFloatingNavbar {
         // Responsive settings
         $sanitized['desktop_position'] = in_array($settings['desktop_position'] ?? 'top-right', ['top-right', 'top-left', 'bottom-right', 'bottom-left']) ? $settings['desktop_position'] : 'top-right';
         $sanitized['tablet_position'] = in_array($settings['tablet_position'] ?? 'top-right', ['top-right', 'top-left', 'bottom-right', 'bottom-left']) ? $settings['tablet_position'] : 'top-right';
-        $sanitized['mobile_position'] = in_array($settings['mobile_position'] ?? 'bottom-center', ['bottom-center', 'bottom-right', 'bottom-left', 'top-right', 'top-left']) ? $settings['mobile_position'] : 'bottom-center';
+        $sanitized['mobile_position'] = in_array($settings['mobile_position'] ?? 'bottom', ['bottom', 'top']) ? $settings['mobile_position'] : 'bottom';
         $sanitized['desktop_scale'] = intval($settings['desktop_scale'] ?? 100);
         $sanitized['tablet_scale'] = intval($settings['tablet_scale'] ?? 90);
         $sanitized['mobile_scale'] = intval($settings['mobile_scale'] ?? 80);
@@ -3061,10 +3071,15 @@ class TirtonicAdvancedFloatingNavbar {
         /* Mobile Responsive */
         @media only screen and (max-width: 767px) {
             .tirtonic-floating-nav {
+                <?php if (($this->options['mobile_position'] ?? 'bottom') === 'top'): ?>
+                top: 3.142vh;
+                bottom: auto;
+                <?php else: ?>
                 bottom: 3.142vh;
+                top: auto;
+                <?php endif; ?>
                 left: 0;
                 right: 0;
-                top: auto;
                 width: calc(100% - 17.812vw);
                 margin: auto;
                 z-index: 99998;
@@ -3122,6 +3137,23 @@ class TirtonicAdvancedFloatingNavbar {
                 width: 4vw;
             }
             
+            .tirtonic-nav-actions {
+                display: flex;
+                align-items: center;
+                gap: 1.984vw;
+                flex-shrink: 0;
+            }
+            
+            .tirtonic-nav-search,
+            .tirtonic-nav-cart,
+            .tirtonic-nav-custom-icon {
+                padding: 8px;
+                border-radius: 50%;
+                background: rgba(255,255,255,0.2);
+                transition: none;
+                transform: none !important;
+            }
+            
             .tirtonic-nav-search svg,
             .tirtonic-nav-cart svg,
             .tirtonic-nav-custom-icon svg {
@@ -3138,32 +3170,25 @@ class TirtonicAdvancedFloatingNavbar {
                 padding: 9.507vh 8.906vw;
                 padding-bottom: 18.723vh;
                 transform: translateY(100%);
-                opacity: 1;
-                visibility: visible;
+                opacity: 0;
+                visibility: hidden;
                 overflow: auto;
                 max-height: 100vh;
                 border-radius: 0;
                 z-index: 99998;
                 background: var(--tirtonic-background);
+                display: none;
             }
             
             .tirtonic-nav-opened .tirtonic-nav-content {
                 transform: translateY(0);
-            }
-            
-            .tirtonic-nav-opened .tirtonic-nav-close {
-                display: flex;
+                opacity: 1;
+                visibility: visible;
+                display: block;
             }
             
             .tirtonic-nav-close {
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                width: 40px;
-                height: 40px;
-                font-size: 24px;
-                display: flex;
-                z-index: 100000;
+                display: none !important;
             }
             
             .quick--access-content_link1 {
@@ -3422,7 +3447,7 @@ class TirtonicAdvancedFloatingNavbar {
             'search_results_title' => 'Product',
             'desktop_position' => 'top-right',
             'tablet_position' => 'top-right',
-            'mobile_position' => 'bottom-center',
+            'mobile_position' => 'bottom',
             'desktop_scale' => 100,
             'tablet_scale' => 90,
             'mobile_scale' => 80,

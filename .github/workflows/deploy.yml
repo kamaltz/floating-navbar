@@ -1,0 +1,89 @@
+name: Auto Deploy Plugin
+
+on:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.0'
+        extensions: mbstring, xml, ctype, json, tokenizer
+        
+    - name: Validate PHP syntax
+      run: find . -name "*.php" -exec php -l {} \;
+
+  version-and-deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && !contains(github.event.head_commit.message, 'Auto-increment version')
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Get current version and increment
+      id: version
+      run: |
+        LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v2.0.0")
+        VERSION=${LATEST_TAG#v}
+        
+        IFS='.' read -ra PARTS <<< "$VERSION"
+        MAJOR=${PARTS[0]:-2}
+        MINOR=${PARTS[1]:-0}
+        PATCH=${PARTS[2]:-0}
+        
+        NEW_PATCH=$((PATCH + 1))
+        NEW_VERSION="$MAJOR.$MINOR.$NEW_PATCH"
+        NEW_TAG="v$NEW_VERSION"
+        
+        echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+        echo "new_tag=$NEW_TAG" >> $GITHUB_OUTPUT
+    
+    - name: Update version in plugin files
+      run: |
+        sed -i "s/Version: [0-9]\+\.[0-9]\+\.[0-9]\+/Version: ${{ steps.version.outputs.new_version }}/g" floating-navbar.php
+        sed -i "s/\$this->version = '[0-9]\+\.[0-9]\+\.[0-9]\+'/\$this->version = '${{ steps.version.outputs.new_version }}'/g" updater.php
+        sed -i "s/define('TIRTONIC_NAV_VERSION', '[0-9]\+\.[0-9]\+\.[0-9]\+')/define('TIRTONIC_NAV_VERSION', '${{ steps.version.outputs.new_version }}')/g" floating-navbar.php
+    
+    - name: Create plugin package
+      run: |
+        mkdir -p dist
+        mkdir -p floating-navbar-wplugin
+        cp -r * floating-navbar-wplugin/ 2>/dev/null || true
+        rm -rf floating-navbar-wplugin/.git floating-navbar-wplugin/.github floating-navbar-wplugin/dist floating-navbar-wplugin/README.md
+        zip -r dist/floating-navbar-plugin.zip floating-navbar-wplugin/
+        rm -rf floating-navbar-wplugin
+    
+    - name: Commit and push changes
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add floating-navbar.php updater.php
+        git commit -m "Auto-increment version to ${{ steps.version.outputs.new_version }}"
+        git tag ${{ steps.version.outputs.new_tag }}
+        git push origin main
+        git push origin ${{ steps.version.outputs.new_tag }}
+    
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ steps.version.outputs.new_tag }}
+        name: Release ${{ steps.version.outputs.new_version }}
+        files: dist/floating-navbar-plugin.zip
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
