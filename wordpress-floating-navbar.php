@@ -56,10 +56,22 @@ class TirtonicAdvancedFloatingNavbar {
     }
     
     public function enqueue_enhanced_scripts() {
-        // Debug: Check if script is enqueued
-        if (!wp_script_is('tirtonic-floating-navbar', 'enqueued')) {
-            echo '<!-- Tirtonic Debug: JavaScript not enqueued -->';
-        }
+        // Enqueue CSS
+        wp_enqueue_style(
+            'tirtonic-floating-navbar',
+            plugin_dir_url(__FILE__) . 'floating-navbar.css',
+            array(),
+            TIRTONIC_NAV_VERSION
+        );
+        
+        // Enqueue JavaScript
+        wp_enqueue_script(
+            'tirtonic-floating-navbar',
+            plugin_dir_url(__FILE__) . 'floating-navbar.js',
+            array('jquery'),
+            TIRTONIC_NAV_VERSION,
+            true
+        );
         
         wp_localize_script('tirtonic-floating-navbar', 'tirtonicAjax', array(
             'ajaxurl' => admin_url('admin-ajax.php'),
@@ -70,8 +82,6 @@ class TirtonicAdvancedFloatingNavbar {
             'shop_url' => class_exists('WooCommerce') ? wc_get_page_permalink('shop') : '',
             'settings' => $this->options
         ));
-        
-        echo '<!-- Tirtonic Debug: JavaScript localized -->';
     }
     
     public function enqueue_admin_scripts($hook) {
@@ -85,7 +95,7 @@ class TirtonicAdvancedFloatingNavbar {
         
         wp_enqueue_script(
             'tirtonic-admin',
-            TIRTONIC_NAV_URL . 'admin/admin.js',
+            plugin_dir_url(__FILE__) . 'admin/admin.js',
             array('jquery', 'wp-color-picker'),
             TIRTONIC_NAV_VERSION,
             true
@@ -93,7 +103,7 @@ class TirtonicAdvancedFloatingNavbar {
         
         wp_enqueue_style(
             'tirtonic-admin',
-            TIRTONIC_NAV_URL . 'admin/admin.css',
+            plugin_dir_url(__FILE__) . 'admin/admin.css',
             array('wp-color-picker'),
             TIRTONIC_NAV_VERSION
         );
@@ -874,9 +884,10 @@ class TirtonicAdvancedFloatingNavbar {
 
                         
                         <div class="tirtonic-admin-footer">
-                            <button type="submit" class="button button-primary button-large">Save Settings</button>
+                            <button type="submit" class="button button-primary button-large" id="save-settings-btn">Save Settings</button>
                             <button type="button" class="button button-secondary" id="reset-settings">Reset to Defaults</button>
                             <a href="<?php echo admin_url('plugins.php?force-check=1'); ?>" class="button button-secondary">Check for Updates</a>
+                            <div id="save-status" class="save-status" style="display: none;"></div>
                         </div>
                     </form>
                 </div>
@@ -902,6 +913,32 @@ class TirtonicAdvancedFloatingNavbar {
         </div>
         
         <style>
+        .save-status {
+            margin-left: 15px;
+            padding: 8px 15px;
+            border-radius: 4px;
+            font-weight: 500;
+            display: inline-block;
+        }
+        
+        .save-status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .save-status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .save-status.loading {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
         .debug-panel {
             background: #f9f9f9;
             border: 1px solid #ddd;
@@ -997,6 +1034,133 @@ class TirtonicAdvancedFloatingNavbar {
         
         <script>
         jQuery(document).ready(function($) {
+            // Form submission handler
+            $('#tirtonic-settings-form').on('submit', function(e) {
+                e.preventDefault();
+                
+                const $form = $(this);
+                const $saveBtn = $('#save-settings-btn');
+                const $status = $('#save-status');
+                
+                // Show loading state
+                $saveBtn.prop('disabled', true).text('Menyimpan...');
+                $status.removeClass('success error').addClass('loading').text('Menyimpan pengaturan...').show();
+                
+                // Serialize form data
+                const formData = $form.serialize() + '&action=tirtonic_save_settings';
+                
+                $.post(ajaxurl, formData)
+                    .done(function(response) {
+                        if (response.success) {
+                            $status.removeClass('loading error').addClass('success').text(response.data.message);
+                            // Auto hide after 3 seconds
+                            setTimeout(function() {
+                                $status.fadeOut();
+                            }, 3000);
+                        } else {
+                            $status.removeClass('loading success').addClass('error').text(response.data.message || 'Terjadi kesalahan');
+                        }
+                    })
+                    .fail(function() {
+                        $status.removeClass('loading success').addClass('error').text('Gagal menyimpan pengaturan');
+                    })
+                    .always(function() {
+                        $saveBtn.prop('disabled', false).text('Save Settings');
+                    });
+            });
+            
+            // Menu item management
+            $('#add-menu-item').on('click', function() {
+                const $container = $('#menu-items-container');
+                const index = $container.children().length;
+                
+                const menuItemHtml = `
+                    <div class="menu-item" data-index="${index}">
+                        <div class="menu-item-header">
+                            <span class="drag-handle">⋮⋮</span>
+                            <input type="text" name="menu_items[${index}][title]" placeholder="Menu Title" class="regular-text">
+                            <button type="button" class="toggle-menu-item">▼</button>
+                            <button type="button" class="remove-menu-item">×</button>
+                        </div>
+                        <div class="menu-item-content">
+                            <input type="url" name="menu_items[${index}][url]" placeholder="Menu URL" class="regular-text">
+                            <div class="menu-item-icon">
+                                <div class="current-icon">${tirtonicAdmin.icon_library.link || ''}</div>
+                                <button type="button" class="button icon-library-btn" data-target="menu_items[${index}][icon]">Choose Icon</button>
+                                <input type="hidden" name="menu_items[${index}][icon]" value="link">
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                $container.append(menuItemHtml);
+            });
+            
+            // Remove menu item
+            $(document).on('click', '.remove-menu-item', function() {
+                $(this).closest('.menu-item').remove();
+                // Re-index remaining items
+                $('#menu-items-container .menu-item').each(function(index) {
+                    $(this).attr('data-index', index);
+                    $(this).find('input, select').each(function() {
+                        const name = $(this).attr('name');
+                        if (name) {
+                            $(this).attr('name', name.replace(/\[\d+\]/, `[${index}]`));
+                        }
+                    });
+                });
+            });
+            
+            // Footer menu validation
+            $('input[name^="footer_menu_"][name$="_title"]').on('blur', function() {
+                const $this = $(this);
+                const index = $this.attr('name').match(/\d+/)[0];
+                const $urlField = $(`input[name="footer_menu_${index}_url"]`);
+                
+                if ($this.val() && !$urlField.val()) {
+                    $urlField.focus().attr('placeholder', 'URL diperlukan untuk menu ini');
+                }
+            });
+            
+            // Additional icons management
+            $('#add-icon').on('click', function() {
+                const $container = $('#additional-icons');
+                const index = $container.children().length;
+                
+                const iconHtml = `
+                    <div class="additional-icon-item" data-index="${index}">
+                        <div class="icon-preview">${tirtonicAdmin.icon_library.link || ''}</div>
+                        <div class="icon-fields">
+                            <input type="text" name="additional_icons[${index}][title]" placeholder="Icon Title" class="regular-text">
+                            <select name="additional_icons[${index}][action]" class="regular-text">
+                                <option value="url">Custom URL</option>
+                                <option value="search">Open Search</option>
+                                <option value="cart">Open Cart</option>
+                            </select>
+                            <input type="url" name="additional_icons[${index}][url]" placeholder="URL (if action is Custom URL)" class="regular-text">
+                        </div>
+                        <div class="icon-controls">
+                            <button type="button" class="button icon-library-btn" data-target="additional_icons[${index}][icon]">Choose Icon</button>
+                            <button type="button" class="button remove-icon">Remove</button>
+                        </div>
+                        <input type="hidden" name="additional_icons[${index}][icon]" value="link">
+                    </div>
+                `;
+                
+                $container.append(iconHtml);
+            });
+            
+            // Remove additional icon
+            $(document).on('click', '.remove-icon', function() {
+                $(this).closest('.additional-icon-item').remove();
+            });
+            
+            // Exclude pages default values
+            const $excludePages = $('textarea[name="exclude_pages"]');
+            if (!$excludePages.val()) {
+                $excludePages.val('cart\ncheckout\ncontact');
+            }
+            
             // Debug Panel Initialization
             $('#jquery-version').text($.fn.jquery || 'Not loaded');
             
@@ -1075,15 +1239,15 @@ class TirtonicAdvancedFloatingNavbar {
             });
             
             // Initial debug log
-            console.log('Tirtonic Debug Panel initialized - Enhanced logging active');
-            console.log('Current page: ' + window.location.href);
-            console.log('User agent: ' + navigator.userAgent);
+            addToDebugConsole('Tirtonic Debug Panel initialized - Enhanced logging active', 'info');
+            addToDebugConsole('Current page: ' + window.location.href, 'info');
+            addToDebugConsole('User agent: ' + navigator.userAgent, 'info');
             
             // Event handlers
             $('#clear-logs').on('click', function() {
                 debugConsole.val('');
                 debugLogs = [];
-                console.log('Debug logs cleared');
+                addToDebugConsole('Debug logs cleared', 'info');
             });
             
             $('#export-logs').on('click', function() {
@@ -1123,7 +1287,7 @@ class TirtonicAdvancedFloatingNavbar {
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
                 
-                console.log('Debug logs exported to file');
+                addToDebugConsole('Debug logs exported to file', 'info');
             });
             
             $('#check-navbar-status').on('click', function() {
@@ -1155,8 +1319,6 @@ class TirtonicAdvancedFloatingNavbar {
             });
             
             $('#force-show-navbar').on('click', function() {
-                console.log('Force show navbar clicked');
-                
                 // Check if navbar is enabled in settings first
                 $.post(ajaxurl, {
                     action: 'tirtonic_get_settings',
@@ -1164,7 +1326,6 @@ class TirtonicAdvancedFloatingNavbar {
                 }, function(response) {
                     if (response.success) {
                         const settings = response.data;
-                        console.log('Navbar enabled in settings:', settings.enable_navbar);
                         
                         if (!settings.enable_navbar) {
                             alert('Navbar is DISABLED in settings! Please enable it first.');
@@ -1183,36 +1344,28 @@ class TirtonicAdvancedFloatingNavbar {
                     navbar.style.right = '50px';
                     navbar.style.zIndex = '9999';
                     navbar.classList.remove('nav-hidden');
-                    console.log('Navbar forced to show');
                     alert('Navbar dipaksa untuk tampil!');
                 } else {
-                    console.error('Navbar element not found in DOM');
                     alert('Navbar element tidak ditemukan! Check console for details.');
                 }
             });
             
             $('#test-navbar-init').on('click', function() {
-                console.log('Testing navbar initialization...');
                 if (typeof window.initTirtonicNav === 'function') {
                     window.initTirtonicNav();
-                    console.log('Navbar re-initialized');
                     alert('Navbar berhasil di-reinitialize!');
                 } else {
-                    console.error('initTirtonicNav function not found');
                     alert('Function initTirtonicNav tidak ditemukan!');
                 }
             });
             
             $('#reset-navbar').on('click', function() {
-                console.log('Resetting navbar...');
                 const navbar = document.getElementById('tirtonicFloatingNav');
                 if (navbar) {
                     navbar.removeAttribute('style');
                     navbar.className = 'tirtonic-floating-nav';
-                    console.log('Navbar reset to default state');
                     alert('Navbar berhasil direset!');
                 } else {
-                    console.error('Navbar element not found for reset');
                     alert('Navbar element tidak ditemukan!');
                 }
             });
@@ -1295,18 +1448,25 @@ class TirtonicAdvancedFloatingNavbar {
     }
     
     public function ajax_save_settings() {
-        check_ajax_referer('tirtonic_admin_nonce', 'nonce');
+        check_ajax_referer('tirtonic_settings_nonce', 'tirtonic_nonce');
         
         if (!current_user_can('manage_options')) {
-            wp_die('Unauthorized');
+            wp_send_json_error(array('message' => 'Unauthorized access'));
         }
         
-        $settings = $_POST['settings'] ?? array();
-        $sanitized_settings = $this->sanitize_settings($settings);
+        // Get all form data
+        $form_data = $_POST;
+        unset($form_data['action'], $form_data['tirtonic_nonce']);
         
-        update_option('tirtonic_floating_nav_settings', $sanitized_settings);
+        $sanitized_settings = $this->sanitize_settings($form_data);
         
-        wp_send_json_success(array('message' => 'Settings saved successfully!'));
+        $result = update_option('tirtonic_floating_nav_settings', $sanitized_settings);
+        
+        if ($result) {
+            wp_send_json_success(array('message' => 'Settings berhasil disimpan!'));
+        } else {
+            wp_send_json_error(array('message' => 'Gagal menyimpan settings'));
+        }
     }
     
     public function ajax_get_preview() {
@@ -1892,56 +2052,62 @@ class TirtonicAdvancedFloatingNavbar {
     private function sanitize_settings($settings) {
         $sanitized = array();
         
-        // Sanitize each setting based on its type
+        // Basic settings
         $sanitized['enable_navbar'] = !empty($settings['enable_navbar']);
         $sanitized['navbar_title'] = sanitize_text_field($settings['navbar_title'] ?? 'Quick Access');
         $sanitized['navbar_position'] = in_array($settings['navbar_position'] ?? 'top-right', ['top-right', 'top-left', 'bottom-right', 'bottom-left']) ? $settings['navbar_position'] : 'top-right';
+        $sanitized['auto_hide'] = !empty($settings['auto_hide']);
         
         // Colors
         $sanitized['primary_color'] = sanitize_hex_color($settings['primary_color'] ?? '#ffc83a');
         $sanitized['secondary_color'] = sanitize_hex_color($settings['secondary_color'] ?? '#ffb800');
+        $sanitized['primary_opacity'] = floatval($settings['primary_opacity'] ?? 1);
+        $sanitized['secondary_opacity'] = floatval($settings['secondary_opacity'] ?? 1);
         $sanitized['text_color'] = sanitize_hex_color($settings['text_color'] ?? '#000000');
+        $sanitized['background_color'] = sanitize_hex_color($settings['background_color'] ?? '#ffffff');
         
-        // Numbers
+        // Dimensions
         $sanitized['border_radius'] = intval($settings['border_radius'] ?? 10);
+        $sanitized['shadow_intensity'] = intval($settings['shadow_intensity'] ?? 20);
         $sanitized['icon_size'] = intval($settings['icon_size'] ?? 24);
         $sanitized['navbar_scale'] = intval($settings['navbar_scale'] ?? 100);
+        
+        // Typography
         $sanitized['title_font_size'] = intval($settings['title_font_size'] ?? 16);
         $sanitized['menu_font_size'] = intval($settings['menu_font_size'] ?? 14);
-        
-        // Typography settings
-        $sanitized['title_font_weight'] = sanitize_text_field($settings['title_font_weight'] ?? '600');
-        $sanitized['title_font_family'] = sanitize_text_field($settings['title_font_family'] ?? 'system');
-        $sanitized['menu_font_weight'] = sanitize_text_field($settings['menu_font_weight'] ?? '500');
-        $sanitized['menu_text_color'] = sanitize_hex_color($settings['menu_text_color'] ?? '#000000');
-        $sanitized['submenu_font_size'] = intval($settings['submenu_font_size'] ?? 12);
-        $sanitized['submenu_text_color'] = sanitize_hex_color($settings['submenu_text_color'] ?? '#666666');
-        $sanitized['search_title_text'] = sanitize_text_field($settings['search_title_text'] ?? 'Newest product');
-        $sanitized['search_results_title'] = sanitize_text_field($settings['search_results_title'] ?? 'Product');
-        $sanitized['search_title_font_size'] = intval($settings['search_title_font_size'] ?? 16);
-        $sanitized['search_title_color'] = sanitize_hex_color($settings['search_title_color'] ?? '#333333');
-        $sanitized['product_font_size'] = intval($settings['product_font_size'] ?? 14);
-        $sanitized['checkout_font_size'] = intval($settings['checkout_font_size'] ?? 14);
-        $sanitized['checkout_font_weight'] = sanitize_text_field($settings['checkout_font_weight'] ?? '600');
-        $sanitized['checkout_button_text'] = sanitize_text_field($settings['checkout_button_text'] ?? 'Checkout');
-        $sanitized['checkout_button_action'] = sanitize_text_field($settings['checkout_button_action'] ?? 'checkout');
+        $sanitized['font_weight'] = sanitize_text_field($settings['font_weight'] ?? '600');
         
         // Icons
         $sanitized['enable_search'] = !empty($settings['enable_search']);
         $sanitized['enable_cart'] = !empty($settings['enable_cart']);
         $sanitized['search_icon'] = sanitize_text_field($settings['search_icon'] ?? 'search');
         $sanitized['cart_icon'] = sanitize_text_field($settings['cart_icon'] ?? 'cart');
+        $sanitized['arrow_icon'] = sanitize_text_field($settings['arrow_icon'] ?? 'arrow_down');
+        $sanitized['search_action'] = sanitize_text_field($settings['search_action'] ?? 'product_search');
+        $sanitized['search_custom_url'] = esc_url_raw($settings['search_custom_url'] ?? '');
+        $sanitized['search_placeholder'] = sanitize_text_field($settings['search_placeholder'] ?? 'Search products...');
+        $sanitized['cart_action'] = sanitize_text_field($settings['cart_action'] ?? 'cart_page');
+        $sanitized['cart_custom_url'] = esc_url_raw($settings['cart_custom_url'] ?? '');
+        $sanitized['checkout_button_text'] = sanitize_text_field($settings['checkout_button_text'] ?? 'Checkout');
+        $sanitized['checkout_button_action'] = sanitize_text_field($settings['checkout_button_action'] ?? 'checkout');
+        $sanitized['checkout_custom_url'] = esc_url_raw($settings['checkout_custom_url'] ?? '');
         
-        // Custom CSS and JS
-        $sanitized['custom_css'] = wp_strip_all_tags($settings['custom_css'] ?? '');
-        $sanitized['custom_mobile_css'] = wp_strip_all_tags($settings['custom_mobile_css'] ?? '');
-        $sanitized['custom_js'] = wp_strip_all_tags($settings['custom_js'] ?? '');
-        
-        // Debug and display options
-        $sanitized['debug_mode'] = !empty($settings['debug_mode']);
-        $sanitized['force_display'] = !empty($settings['force_display']);
-        
-
+        // Additional icons
+        if (isset($settings['additional_icons']) && is_array($settings['additional_icons'])) {
+            $sanitized['additional_icons'] = array();
+            foreach ($settings['additional_icons'] as $icon) {
+                if (!empty($icon['title'])) {
+                    $sanitized['additional_icons'][] = array(
+                        'title' => sanitize_text_field($icon['title']),
+                        'icon' => sanitize_text_field($icon['icon'] ?? 'link'),
+                        'action' => sanitize_text_field($icon['action'] ?? 'url'),
+                        'url' => esc_url_raw($icon['url'] ?? '')
+                    );
+                }
+            }
+        } else {
+            $sanitized['additional_icons'] = array();
+        }
         
         // Menu items
         if (isset($settings['menu_items']) && is_array($settings['menu_items'])) {
@@ -1955,10 +2121,21 @@ class TirtonicAdvancedFloatingNavbar {
                     );
                 }
             }
+        } else {
+            $sanitized['menu_items'] = $this->get_default_menu_items();
         }
         
-        // Exclude pages
-        $sanitized['exclude_pages'] = sanitize_textarea_field($settings['exclude_pages'] ?? '');
+        // Menu settings
+        $sanitized['menu_style'] = sanitize_text_field($settings['menu_style'] ?? 'simple');
+        $sanitized['show_menu_icons'] = !empty($settings['show_menu_icons']);
+        
+        // Footer menu
+        $sanitized['footer_menu_1_title'] = sanitize_text_field($settings['footer_menu_1_title'] ?? '');
+        $sanitized['footer_menu_1_url'] = esc_url_raw($settings['footer_menu_1_url'] ?? '');
+        $sanitized['footer_menu_2_title'] = sanitize_text_field($settings['footer_menu_2_title'] ?? '');
+        $sanitized['footer_menu_2_url'] = esc_url_raw($settings['footer_menu_2_url'] ?? '');
+        $sanitized['footer_menu_3_title'] = sanitize_text_field($settings['footer_menu_3_title'] ?? '');
+        $sanitized['footer_menu_3_url'] = esc_url_raw($settings['footer_menu_3_url'] ?? '');
         
         // Responsive settings
         $sanitized['desktop_position'] = in_array($settings['desktop_position'] ?? 'top-right', ['top-right', 'top-left', 'bottom-right', 'bottom-left']) ? $settings['desktop_position'] : 'top-right';
@@ -1972,15 +2149,23 @@ class TirtonicAdvancedFloatingNavbar {
         $sanitized['hide_mobile'] = !empty($settings['hide_mobile']);
         $sanitized['mobile_full_width'] = !empty($settings['mobile_full_width']);
         
-        // Auto-update settings
+        // Advanced settings
+        $sanitized['animation_duration'] = intval($settings['animation_duration'] ?? 500);
+        $sanitized['z_index'] = intval($settings['z_index'] ?? 999);
+        $sanitized['mobile_breakpoint'] = intval($settings['mobile_breakpoint'] ?? 768);
+        $sanitized['exclude_pages'] = sanitize_textarea_field($settings['exclude_pages'] ?? "cart\ncheckout\ncontact");
         $sanitized['enable_auto_update'] = !empty($settings['enable_auto_update']);
         $sanitized['update_channel'] = in_array($settings['update_channel'] ?? 'stable', ['stable', 'beta']) ? $settings['update_channel'] : 'stable';
+        
+        // Custom CSS
+        $sanitized['custom_css'] = wp_strip_all_tags($settings['custom_css'] ?? '');
+        $sanitized['custom_mobile_css'] = wp_strip_all_tags($settings['custom_mobile_css'] ?? '');
         
         return $sanitized;
     }
     
     private function is_page_excluded() {
-        $exclude_pages = $this->options['exclude_pages'] ?? '';
+        $exclude_pages = $this->options['exclude_pages'] ?? "cart\ncheckout\ncontact";
         if (empty($exclude_pages)) {
             return false;
         }
@@ -1992,7 +2177,8 @@ class TirtonicAdvancedFloatingNavbar {
             $excluded_url = trim($excluded_url, '/');
             $current_path = trim(parse_url($current_url, PHP_URL_PATH), '/');
             
-            if ($excluded_url === $current_path || strpos($current_path, $excluded_url . '/') === 0) {
+            // Check exact match or if current path starts with excluded path
+            if ($excluded_url === $current_path || strpos($current_path, $excluded_url) !== false) {
                 return true;
             }
         }
@@ -2018,10 +2204,8 @@ class TirtonicAdvancedFloatingNavbar {
         $position_class = isset($this->options['navbar_position']) ? $this->options['navbar_position'] : 'top-right';
         $title = isset($this->options['navbar_title']) ? $this->options['navbar_title'] : 'Quick Access';
         
-        echo '<!-- Tirtonic Debug: Starting navbar render -->';
         ?>
         <div id="tirtonicFloatingNav" class="tirtonic-floating-nav <?php echo esc_attr($position_class); ?>" data-settings='<?php echo esc_attr(json_encode($this->options)); ?>'>
-            <!-- Tirtonic Debug: Navbar element created -->
             <div class="tirtonic-nav-header">
                 <div class="tirtonic-nav-toggle">
                     <span class="tirtonic-nav-title"><?php echo esc_html($title); ?></span>
@@ -2133,27 +2317,7 @@ class TirtonicAdvancedFloatingNavbar {
         
         <?php $this->render_custom_styles(); ?>
         
-        <script>
-        console.log('Tirtonic Debug: Navbar HTML rendered, element ID: tirtonicFloatingNav');
-        
-        // Force show navbar for debugging
-        document.addEventListener('DOMContentLoaded', function() {
-            const navbar = document.getElementById('tirtonicFloatingNav');
-            if (navbar) {
-                console.log('Tirtonic Debug: Navbar element found in DOM');
-                navbar.style.display = 'block';
-                navbar.style.visibility = 'visible';
-                navbar.style.opacity = '1';
-                navbar.style.position = 'fixed';
-                navbar.style.top = '50px';
-                navbar.style.right = '50px';
-                navbar.style.zIndex = '9999';
-                console.log('Tirtonic Debug: Navbar forced to display');
-            } else {
-                console.error('Tirtonic Debug: Navbar element NOT found in DOM after render');
-            }
-        });
-        </script>
+
         
         <?php
     }
@@ -2246,7 +2410,7 @@ class TirtonicAdvancedFloatingNavbar {
         $menu_text_color = isset($this->options['menu_text_color']) ? $this->options['menu_text_color'] : '#000000';
         $submenu_font_size = isset($this->options['submenu_font_size']) ? $this->options['submenu_font_size'] : '12';
         $submenu_text_color = isset($this->options['submenu_text_color']) ? $this->options['submenu_text_color'] : '#666666';
-        $search_title_text = isset($this->options['search_title_text']) ? $this->options['search_title_text'] : 'Newest product';
+        $search_title_text = 'Newest product';
         $search_title_font_size = isset($this->options['search_title_font_size']) ? $this->options['search_title_font_size'] : '16';
         $search_title_color = isset($this->options['search_title_color']) ? $this->options['search_title_color'] : '#333333';
         $product_font_size = isset($this->options['product_font_size']) ? $this->options['product_font_size'] : '14';
@@ -2613,8 +2777,151 @@ class TirtonicAdvancedFloatingNavbar {
         }
         
         .newest--product {
-            max-height: 300px;
+            max-height: 400px;
             overflow-y: auto;
+        }
+        
+        /* Product Grid Layout */
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .product-card {
+            background: #fff;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .product-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-color: var(--tirtonic-primary);
+        }
+        
+        .product-card a {
+            display: block;
+            text-decoration: none;
+            color: inherit;
+        }
+        
+        .product-image {
+            width: 100%;
+            height: 80px;
+            object-fit: cover;
+            display: block;
+        }
+        
+        .product-image-placeholder {
+            width: 100%;
+            height: 80px;
+            background: #f8f9fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6c757d;
+            font-size: 12px;
+        }
+        
+        .product-image-placeholder::before {
+            content: 'No Image';
+        }
+        
+        .product-info {
+            padding: 10px;
+        }
+        
+        .product-title {
+            margin: 0 0 5px 0;
+            font-size: 12px;
+            font-weight: 600;
+            color: #333;
+            line-height: 1.3;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .product-price {
+            color: var(--tirtonic-primary);
+            font-weight: bold;
+            font-size: 11px;
+            display: block;
+        }
+        
+        /* Mobile responsive for product grid */
+        @media (max-width: 767px) {
+            .product-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+            
+            .product-image {
+                height: 60px;
+            }
+            
+            .product-image-placeholder {
+                height: 60px;
+            }
+            
+            .product-info {
+                padding: 8px;
+            }
+            
+            .product-title {
+                font-size: 11px;
+            }
+            
+            .product-price {
+                font-size: 10px;
+            }
+        }
+        
+        /* Legacy product item styles for backward compatibility */
+        .newest--product-item {
+            margin-bottom: 10px;
+            padding: 8px;
+            border-radius: 6px;
+            transition: background 0.2s ease;
+        }
+        
+        .newest--product-item:hover {
+            background: #f8f9fa;
+        }
+        
+        .newest--product-item a {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: #333;
+        }
+        
+        .newest--product-item img {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+        
+        .newest--product-item h4 {
+            margin: 0 0 5px 0;
+            font-size: 14px;
+            font-weight: 600;
+            line-height: 1.3;
+        }
+        
+        .newest--product-item .price {
+            color: var(--tirtonic-primary);
+            font-weight: bold;
+            font-size: 13px;
         }
         
         /* Force display if enabled */
@@ -3497,7 +3804,9 @@ class TirtonicAdvancedFloatingNavbar {
             'footer_menu_1_title' => 'Ask personal shopper',
             'footer_menu_1_url' => 'https://api.whatsapp.com/send/?phone=6285163215511',
             'footer_menu_2_title' => 'Follow our Instagram',
-            'footer_menu_2_url' => 'https://instagram.com/tirtonic'
+            'footer_menu_2_url' => 'https://instagram.com/tirtonic',
+            'footer_menu_3_title' => '',
+            'footer_menu_3_url' => ''
         );
     }
     
@@ -3532,6 +3841,7 @@ class TirtonicAdvancedFloatingNavbar {
             $items[] = array('title' => 'Articles', 'url' => 'https://tirtonic.com/article', 'icon' => 'info');
             $items[] = array('title' => 'About', 'url' => 'https://tirtonic.com/stores', 'icon' => 'info');
             $items[] = array('title' => 'Contact', 'url' => 'https://tirtonic.com/contact', 'icon' => 'contact');
+            $items[] = array('title' => 'Sponsorship', 'url' => 'https://tirtonic.com/sponsorship', 'icon' => 'star');
         }
         
         return $items;

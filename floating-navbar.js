@@ -541,17 +541,21 @@ class TirtonicFloatingNav {
         const productList = this.nav.querySelector('.newest--product-list');
         if (productList) {
             if (products.length > 0) {
-                productList.innerHTML = products.map(product => `
-                    <div class="newest--product-item">
-                        <a href="${product.url}" style="display:flex;align-items:center;gap:10px;padding:10px;text-decoration:none;color:#333;">
-                            ${product.image ? `<img src="${product.image}" alt="${product.title}" style="width:50px;height:50px;object-fit:cover;border-radius:4px;">` : ''}
-                            <div>
-                                <h4 style="margin:0;font-size:14px;font-weight:600;">${product.title}</h4>
-                                <span style="color:#ffc83a;font-weight:bold;font-size:13px;">${product.price}</span>
+                productList.innerHTML = `
+                    <div class="product-grid">
+                        ${products.map(product => `
+                            <div class="product-card">
+                                <a href="${product.url}">
+                                    ${product.image ? `<img src="${product.image}" alt="${product.title}" class="product-image">` : '<div class="product-image-placeholder"></div>'}
+                                    <div class="product-info">
+                                        <h4 class="product-title">${product.title}</h4>
+                                        <span class="product-price">${product.price}</span>
+                                    </div>
+                                </a>
                             </div>
-                        </a>
+                        `).join('')}
                     </div>
-                `).join('');
+                `;
             } else {
                 productList.innerHTML = '<p style="text-align:center;color:#666;">No products available</p>';
             }
@@ -603,17 +607,21 @@ class TirtonicFloatingNav {
     renderSearchResults(products) {
         const searchResults = this.nav.querySelector('.searched--product-list');
         if (searchResults) {
-            searchResults.innerHTML = products.map(product => `
-                <div class="newest--product-item">
-                    <a href="${product.url}" style="display:flex;align-items:center;gap:10px;padding:10px;text-decoration:none;color:#333;">
-                        ${product.image ? `<img src="${product.image}" alt="${product.title}" style="width:50px;height:50px;object-fit:cover;border-radius:4px;">` : ''}
-                        <div>
-                            <h4 style="margin:0;font-size:14px;font-weight:600;">${product.title}</h4>
-                            <span style="color:#ffc83a;font-weight:bold;font-size:13px;">${product.price}</span>
+            searchResults.innerHTML = `
+                <div class="product-grid">
+                    ${products.map(product => `
+                        <div class="product-card">
+                            <a href="${product.url}">
+                                ${product.image ? `<img src="${product.image}" alt="${product.title}" class="product-image">` : '<div class="product-image-placeholder"></div>'}
+                                <div class="product-info">
+                                    <h4 class="product-title">${product.title}</h4>
+                                    <span class="product-price">${product.price}</span>
+                                </div>
+                            </a>
                         </div>
-                    </a>
+                    `).join('')}
                 </div>
-            `).join('');
+            `;
         }
     }
     
@@ -681,16 +689,13 @@ class TirtonicFloatingNav {
 let tirtonicNav;
 
 function initTirtonicNav() {
-    console.log('Tirtonic Debug: initTirtonicNav called');
     // Add small delay to ensure all elements are rendered
     setTimeout(() => {
-        console.log('Tirtonic Debug: Creating TirtonicFloatingNav instance');
         tirtonicNav = new TirtonicFloatingNav();
         // Make globally accessible
         if (typeof window !== 'undefined') {
             window.tirtonicNav = tirtonicNav;
             window.TirtonicFloatingNav = TirtonicFloatingNav;
-            console.log('Tirtonic Debug: TirtonicFloatingNav made globally accessible');
         }
     }, 100);
 }
