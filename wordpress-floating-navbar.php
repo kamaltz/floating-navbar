@@ -2211,9 +2211,11 @@ class TirtonicAdvancedFloatingNavbar {
             }
         }
         
-        // Hide entire footer section if no items
+        // Show footer section even if no custom items
         if (!$has_items) {
-            echo '<style>.quick--access-content_link2 { display: none; }</style>';
+            // Default footer items if none configured
+            echo '<a href="https://api.whatsapp.com/send/?phone=6285163215511">Ask personal shopper</a>';
+            echo '<a href="https://instagram.com/tirtonic">Follow our Instagram</a>';
         }
     }
     
@@ -3122,11 +3124,17 @@ class TirtonicAdvancedFloatingNavbar {
                 z-index: 99998;
             }
             
+            .tirtonic-floating-nav.nav-hidden {
+                transform: translateY(100%);
+                transition: transform 0.3s ease;
+            }
+            
             .tirtonic-nav-header {
                 padding: 1.878vh 9.415vw;
                 min-width: 80vw;
                 position: relative;
                 z-index: 99999;
+                margin-top: 220%;
             }
             
             .tirtonic-nav-title {
@@ -3154,6 +3162,12 @@ class TirtonicAdvancedFloatingNavbar {
                 transform: none !important;
             }
             
+            .tirtonic-nav-opened .tirtonic-nav-search,
+            .tirtonic-nav-opened .tirtonic-nav-cart,
+            .tirtonic-nav-opened .tirtonic-nav-custom-icon {
+                transform: none !important;
+            }
+            
             .tirtonic-nav-search svg,
             .tirtonic-nav-cart svg,
             .tirtonic-nav-custom-icon svg {
@@ -3175,8 +3189,9 @@ class TirtonicAdvancedFloatingNavbar {
                 overflow: auto;
                 max-height: 100vh;
                 border-radius: 0;
-                z-index: 99998;
+                z-index: 99997;
                 background: var(--tirtonic-background);
+                transition: transform 0.3s ease;
                 display: none;
             }
             
@@ -3188,7 +3203,25 @@ class TirtonicAdvancedFloatingNavbar {
             }
             
             .tirtonic-nav-close {
-                display: none !important;
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                width: 40px;
+                height: 40px;
+                font-size: 24px;
+                display: none;
+                align-items: center;
+                justify-content: center;
+                z-index: 99998;
+                background: rgba(0,0,0,0.1);
+                border: none;
+                border-radius: 50%;
+                color: #000;
+                cursor: pointer;
+            }
+            
+            .tirtonic-nav-opened .tirtonic-nav-close {
+                display: flex;
             }
             
             .quick--access-content_link1 {
