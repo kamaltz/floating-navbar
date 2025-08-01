@@ -18,7 +18,7 @@ class FloatingNavbarUpdater {
         $this->plugin_file = $plugin_file;
         $this->plugin_slug = plugin_basename($plugin_file);
         $this->plugin_path = plugin_dir_path($plugin_file);
-        $this->version = '2.0.3';
+        $this->version = '2.0.1';
         $this->github_repo = 'kamaltz/floating-navbar-wplugin';
         
         add_filter('pre_set_site_transient_update_plugins', array($this, 'check_for_update'));

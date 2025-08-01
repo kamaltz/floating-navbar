@@ -2,7 +2,11 @@
 /**
  * Plugin Name: Floating Navbar
  * Description: Advanced floating navbar with Elementor-like admin panel, WooCommerce integration, customizable icons, real-time product search, wishlist/cart integration, dan comprehensive style customization. Perfectly matches orpcatalog.id design with enhanced functionality.
+<<<<<<< HEAD
  * Version: 4.0.29
+=======
+ * Version: 2.0.1
+>>>>>>> 7be0e19796bc6a3a659241d3e719084ddbba61c8
  * Author: Kamaltz
  * Requires at least: 5.0
  * Tested up to: 6.4
@@ -21,7 +25,7 @@ if (!defined('ABSPATH')) {
 // Plugin constants
 define('TIRTONIC_NAV_URL', plugin_dir_url(__FILE__));
 define('TIRTONIC_NAV_PATH', plugin_dir_path(__FILE__));
-define('TIRTONIC_NAV_VERSION', '2.0.3');
+define('TIRTONIC_NAV_VERSION', '2.0.1');
 
 // Include main functionality
 require_once TIRTONIC_NAV_PATH . 'wordpress-floating-navbar.php';
