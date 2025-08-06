@@ -252,7 +252,7 @@ class TirtonicFloatingNav {
                 bottom: 0 !important;
                 width: 100vw !important;
                 height: 100vh !important;
-                z-index: 99999 !important;
+                z-index: 9999 !important;
                 background: white !important;
                 padding: 60px 20px 20px 20px !important;
                 overflow: auto !important;
@@ -378,11 +378,13 @@ class TirtonicFloatingNav {
         // Remove mobile fullscreen element
         const mobileContent = document.getElementById('mobile-fullscreen-content');
         if (mobileContent) {
+            mobileContent.style.pointerEvents = 'none';
             mobileContent.remove();
         }
         
         // Restore body scroll
         document.body.style.overflow = '';
+        document.body.style.pointerEvents = 'auto';
         
         // Analytics tracking disabled
     }
