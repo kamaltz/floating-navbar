@@ -226,7 +226,17 @@ class TirtonicFloatingNav {
             // Clone the entire content to preserve all elements
             fullscreenContent.innerHTML = content.cloneNode(true).innerHTML;
             
-            // Ensure logo is visible in mobile view
+            // Add logo to mobile view if not exists
+            const wrapperMenu = fullscreenContent.querySelector('.wrapper-menu');
+            if (wrapperMenu && !fullscreenContent.querySelector('.tirtonic-nav-logo')) {
+                const logoDiv = document.createElement('div');
+                logoDiv.className = 'tirtonic-nav-logo';
+                logoDiv.innerHTML = '<img src="https://tirtonic.com/wp-content/uploads/2025/07/cropped-default-logo.png" alt="Logo">';
+                logoDiv.style.cssText = 'text-align: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #e9ecef;';
+                wrapperMenu.insertBefore(logoDiv, wrapperMenu.firstChild);
+            }
+            
+            // Ensure existing logo is visible in mobile view
             const logoElement = fullscreenContent.querySelector('.tirtonic-nav-logo');
             if (logoElement) {
                 logoElement.style.display = 'block';

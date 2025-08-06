@@ -543,6 +543,21 @@
         max-width: 150px;
         max-height: 50px;
     }
+    
+    #mobile-fullscreen-content .tirtonic-nav-logo {
+        display: block !important;
+        text-align: center !important;
+        margin-bottom: 20px !important;
+        padding-bottom: 15px !important;
+        border-bottom: 1px solid #e9ecef !important;
+    }
+    
+    #mobile-fullscreen-content .tirtonic-nav-logo img {
+        max-width: 150px !important;
+        max-height: 50px !important;
+        display: block !important;
+        margin: 0 auto !important;
+    }
 }
 
 /* Enhanced Features Styling - Exact orpcatalog.id Search */
