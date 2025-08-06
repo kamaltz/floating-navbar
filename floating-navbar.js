@@ -278,6 +278,14 @@ class TirtonicFloatingNav {
             // Add event listeners for mobile
             this.bindMobileEvents(fullscreenContent);
             
+            // Initialize search functionality for mobile if search view
+            if (view === 'search') {
+                const searchInput = fullscreenContent.querySelector('#search--revamp input, #tirtonic-search-input');
+                if (searchInput) {
+                    this.setupMobileSearchInput(searchInput, fullscreenContent);
+                }
+            }
+            
             // Prevent closing when clicking inside mobile content
             fullscreenContent.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -411,16 +419,42 @@ class TirtonicFloatingNav {
     
     setupSearchInput() {
         const searchInput = this.nav.querySelector('#tirtonic-search-input, #search--revamp input');
+        const closeIcon = this.nav.querySelector('.close--icon');
+        
         if (searchInput && !searchInput.hasAttribute('data-listener')) {
             searchInput.setAttribute('data-listener', 'true');
+            
+            let searchTimeout;
             searchInput.addEventListener('input', (e) => {
                 const searchTerm = e.target.value.trim();
-                if (searchTerm.length >= 2) {
-                    this.performProductSearch(searchTerm);
-                } else {
-                    this.loadNewestProducts();
+                
+                // Show/hide close icon
+                if (closeIcon) {
+                    closeIcon.style.display = e.target.value.length > 0 ? 'flex' : 'none';
                 }
+                
+                // Debounce search
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    if (searchTerm.length >= 2) {
+                        this.performProductSearch(searchTerm);
+                    } else {
+                        this.loadNewestProducts();
+                    }
+                }, 300);
             });
+            
+            // Close icon functionality
+            if (closeIcon && !closeIcon.hasAttribute('data-listener')) {
+                closeIcon.setAttribute('data-listener', 'true');
+                closeIcon.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    searchInput.value = '';
+                    closeIcon.style.display = 'none';
+                    this.loadNewestProducts();
+                });
+            }
         }
     }
     
@@ -650,14 +684,17 @@ class TirtonicFloatingNav {
     }
     
     performProductSearch(searchTerm) {
-        if (typeof tirtonicAjax === 'undefined') return;
+        if (typeof tirtonicAjax === 'undefined') {
+            console.error('tirtonicAjax not defined - AJAX functionality unavailable');
+            return;
+        }
         
         const searchResults = this.nav.querySelector('.searched--product-list');
         const newestWrapper = this.nav.querySelector('.newest--product-wrapper');
         const searchedWrapper = this.nav.querySelector('.newest--product-searched');
         
         if (searchResults) {
-            searchResults.innerHTML = '<p>Searching...</p>';
+            searchResults.innerHTML = '<p style="text-align:center;color:#666;padding:15px;">Searching...</p>';
         }
         
         if (newestWrapper) newestWrapper.style.display = 'none';
@@ -674,20 +711,32 @@ class TirtonicFloatingNav {
                 nonce: tirtonicAjax.nonce
             })
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
         .then(data => {
-            if (data.success && data.data.length > 0) {
+            if (data.success && data.data && data.data.length > 0) {
                 this.renderSearchResults(data.data);
             } else {
                 if (searchResults) {
-                    searchResults.innerHTML = '<p>No products found</p>';
+                    searchResults.innerHTML = '<p style="text-align:center;color:#666;padding:15px;">No products found for "' + searchTerm + '"</p>';
                 }
+                // Load newest products as fallback
+                this.loadNewestProducts();
             }
         })
         .catch(error => {
+            console.error('Desktop search error:', error);
             if (searchResults) {
-                searchResults.innerHTML = '<p>Search error occurred</p>';
+                searchResults.innerHTML = '<p style="text-align:center;color:#e74c3c;padding:15px;">Search temporarily unavailable. Please try again.</p>';
             }
+            // Load newest products as fallback
+            setTimeout(() => {
+                this.loadNewestProducts();
+            }, 2000);
         });
     }
     
@@ -749,7 +798,13 @@ class TirtonicFloatingNav {
                     if (search) {
                         search.style.display = 'block';
                         search.style.opacity = '1';
-                        this.loadNewestProducts();
+                        // Load newest products for mobile search
+                        this.loadMobileNewestProducts(fullscreenContent);
+                        // Focus search input
+                        const searchInput = fullscreenContent.querySelector('#search--revamp input, #tirtonic-search-input');
+                        if (searchInput) {
+                            setTimeout(() => searchInput.focus(), 100);
+                        }
                     }
                     break;
                 case 'cart':
@@ -770,23 +825,46 @@ class TirtonicFloatingNav {
     }
     
     bindMobileEvents(fullscreenContent) {
-        // Quantity controls
+        // Search functionality
+        const searchInput = fullscreenContent.querySelector('#search--revamp input, #tirtonic-search-input');
+        const closeIcon = fullscreenContent.querySelector('.close--icon');
+        
+        if (searchInput && !searchInput.hasAttribute('data-mobile-bound')) {
+            searchInput.setAttribute('data-mobile-bound', 'true');
+            this.setupMobileSearchInput(searchInput, fullscreenContent);
+            
+            if (closeIcon) {
+                closeIcon.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    searchInput.value = '';
+                    closeIcon.style.display = 'none';
+                    this.loadMobileNewestProducts(fullscreenContent);
+                });
+            }
+        }
+        
+        // Quantity controls for cart items
         fullscreenContent.querySelectorAll('.qty-plus, .qty-minus').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                const isPlus = e.target.classList.contains('qty-plus');
-                const quantitySpan = e.target.parentElement.querySelector('.quantity');
-                const currentQty = parseInt(quantitySpan.textContent);
-                const newQty = isPlus ? currentQty + 1 : Math.max(1, currentQty - 1);
-                quantitySpan.textContent = newQty;
-                this.updateCartCount();
-            });
+            if (!btn.hasAttribute('data-mobile-bound')) {
+                btn.setAttribute('data-mobile-bound', 'true');
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const isPlus = e.target.classList.contains('qty-plus');
+                    const quantitySpan = e.target.parentElement.querySelector('.quantity');
+                    const currentQty = parseInt(quantitySpan.textContent);
+                    const newQty = isPlus ? currentQty + 1 : Math.max(1, currentQty - 1);
+                    quantitySpan.textContent = newQty;
+                    this.updateCartCount();
+                });
+            }
         });
         
         // Checkout button
         const checkoutBtn = fullscreenContent.querySelector('.wishlist-checkout-btn');
-        if (checkoutBtn) {
+        if (checkoutBtn && !checkoutBtn.hasAttribute('data-mobile-bound')) {
+            checkoutBtn.setAttribute('data-mobile-bound', 'true');
             checkoutBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -795,31 +873,169 @@ class TirtonicFloatingNav {
                 this.handleCheckoutAction(action, [], settings);
             });
         }
+    }
+    
+    setupMobileSearchInput(searchInput, container) {
+        if (!searchInput || searchInput.hasAttribute('data-mobile-listener')) return;
         
-        // Search functionality
-        const searchInput = fullscreenContent.querySelector('#search--revamp input');
-        const closeIcon = fullscreenContent.querySelector('.close--icon');
-        if (searchInput && closeIcon) {
-            searchInput.addEventListener('input', (e) => {
-                const searchTerm = e.target.value.trim();
-                if (e.target.value.length > 0) {
-                    closeIcon.style.display = 'flex';
-                } else {
-                    closeIcon.style.display = 'none';
-                }
-                
-                if (searchTerm.length >= 2) {
-                    this.performProductSearch(searchTerm);
-                } else {
-                    this.loadNewestProducts();
-                }
-            });
+        searchInput.setAttribute('data-mobile-listener', 'true');
+        let searchTimeout;
+        
+        searchInput.addEventListener('input', (e) => {
+            e.stopPropagation();
+            const searchTerm = e.target.value.trim();
+            const closeIcon = container.querySelector('.close--icon');
             
-            closeIcon.addEventListener('click', () => {
-                searchInput.value = '';
-                closeIcon.style.display = 'none';
-                this.loadNewestProducts();
-            });
+            if (closeIcon) {
+                closeIcon.style.display = e.target.value.length > 0 ? 'flex' : 'none';
+            }
+            
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                if (searchTerm.length >= 2) {
+                    this.performMobileProductSearch(searchTerm, container);
+                } else {
+                    this.loadMobileNewestProducts(container);
+                }
+            }, 300);
+        });
+        
+        // Load initial newest products for mobile
+        this.loadMobileNewestProducts(container);
+    }
+    
+    performMobileProductSearch(searchTerm, container) {
+        if (typeof tirtonicAjax === 'undefined') {
+            console.error('tirtonicAjax not defined - AJAX functionality unavailable');
+            return;
+        }
+        
+        const searchResults = container.querySelector('.searched--product-list');
+        const newestWrapper = container.querySelector('.newest--product-wrapper');
+        const searchedWrapper = container.querySelector('.newest--product-searched');
+        
+        if (searchResults) searchResults.innerHTML = '<p>Searching...</p>';
+        if (newestWrapper) newestWrapper.style.display = 'none';
+        if (searchedWrapper) searchedWrapper.style.display = 'block';
+        
+        fetch(tirtonicAjax.ajaxurl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({
+                action: 'tirtonic_search_products',
+                search_term: searchTerm,
+                nonce: tirtonicAjax.nonce
+            })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success && data.data && data.data.length > 0) {
+                this.renderMobileSearchResults(data.data, container);
+            } else {
+                if (searchResults) {
+                    searchResults.innerHTML = '<p style="text-align:center;color:#666;padding:20px;">No products found for "' + searchTerm + '"</p>';
+                }
+                // Load newest products as fallback
+                this.loadMobileNewestProducts(container);
+            }
+        })
+        .catch(error => {
+            console.error('Mobile search error:', error);
+            if (searchResults) {
+                searchResults.innerHTML = '<p style="text-align:center;color:#e74c3c;padding:20px;">Search temporarily unavailable. Please try again.</p>';
+            }
+            // Load newest products as fallback
+            setTimeout(() => {
+                this.loadMobileNewestProducts(container);
+            }, 2000);
+        });
+    }
+    
+    loadMobileNewestProducts(container) {
+        const newestWrapper = container.querySelector('.newest--product-wrapper');
+        const searchedWrapper = container.querySelector('.newest--product-searched');
+        
+        if (newestWrapper) newestWrapper.style.display = 'block';
+        if (searchedWrapper) searchedWrapper.style.display = 'none';
+        
+        // Load newest products via AJAX for mobile
+        if (typeof tirtonicAjax !== 'undefined') {
+            const productList = container.querySelector('.newest--product-list');
+            if (productList) {
+                productList.innerHTML = '<p style="text-align:center;color:#666;">Loading products...</p>';
+                
+                fetch(tirtonicAjax.ajaxurl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({
+                        action: 'tirtonic_get_newest_products',
+                        nonce: tirtonicAjax.nonce
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.data) {
+                        this.renderMobileNewestProducts(data.data, container);
+                    } else {
+                        productList.innerHTML = '<p style="text-align:center;color:#666;">No products available</p>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading newest products:', error);
+                    productList.innerHTML = '<p style="text-align:center;color:#666;">Unable to load products</p>';
+                });
+            }
+        }
+    }
+    
+    renderMobileSearchResults(products, container) {
+        const searchResults = container.querySelector('.searched--product-list');
+        if (searchResults) {
+            searchResults.innerHTML = `
+                <div class="product-grid">
+                    ${products.map(product => `
+                        <div class="product-card">
+                            <a href="${product.url}">
+                                ${product.image ? `<img src="${product.image}" alt="${product.title}" class="product-image">` : '<div class="product-image-placeholder"></div>'}
+                                <div class="product-info">
+                                    <h4 class="product-title">${product.title}</h4>
+                                    <span class="product-price">${product.price}</span>
+                                </div>
+                            </a>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+    }
+    
+    renderMobileNewestProducts(products, container) {
+        const productList = container.querySelector('.newest--product-list');
+        if (productList) {
+            if (products && products.length > 0) {
+                productList.innerHTML = `
+                    <div class="product-grid">
+                        ${products.map(product => `
+                            <div class="product-card">
+                                <a href="${product.url}">
+                                    ${product.image ? `<img src="${product.image}" alt="${product.title}" class="product-image">` : '<div class="product-image-placeholder"></div>'}
+                                    <div class="product-info">
+                                        <h4 class="product-title">${product.title}</h4>
+                                        <span class="product-price">${product.price}</span>
+                                    </div>
+                                </a>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } else {
+                productList.innerHTML = '<p style="text-align:center;color:#666;">No products available</p>';
+            }
         }
     }
     

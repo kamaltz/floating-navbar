@@ -2735,6 +2735,7 @@ class TirtonicAdvancedFloatingNavbar {
         
         $position_class = isset($this->options['navbar_position']) ? $this->options['navbar_position'] : 'top-right';
         $title = isset($this->options['navbar_title']) ? $this->options['navbar_title'] : 'Quick Access';
+        $search_title_text = isset($this->options['search_title_text']) ? $this->options['search_title_text'] : 'Newest product';
         
         ?>
         <div id="tirtonicFloatingNav" class="tirtonic-floating-nav <?php echo esc_attr($position_class); ?>" data-settings='<?php echo esc_attr(json_encode($this->options)); ?>'>
