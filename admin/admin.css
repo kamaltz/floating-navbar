@@ -1,0 +1,627 @@
+/**
+ * Tirtonic Floating Navbar Admin Styles
+ */
+
+.tirtonic-admin-wrap {
+    margin: 20px 0;
+}
+
+.tirtonic-admin-container {
+    display: flex;
+    gap: 20px;
+    max-width: 1200px;
+}
+
+.tirtonic-admin-sidebar {
+    width: 250px;
+    flex-shrink: 0;
+}
+
+.tirtonic-admin-nav ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+}
+
+.tirtonic-admin-nav li {
+    border-bottom: 1px solid #ccd0d4;
+}
+
+.tirtonic-admin-nav li:last-child {
+    border-bottom: none;
+}
+
+.tirtonic-admin-nav a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 15px;
+    text-decoration: none;
+    color: #50575e;
+    transition: all 0.2s ease;
+}
+
+.tirtonic-admin-nav a:hover,
+.tirtonic-admin-nav a.active {
+    background: #0073aa;
+    color: #fff;
+}
+
+.tirtonic-admin-nav .dashicons {
+    font-size: 16px;
+}
+
+.tirtonic-admin-content {
+    flex: 1;
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    padding: 20px;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.tirtonic-section {
+    margin-bottom: 30px;
+}
+
+.tirtonic-section h2 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 20px;
+    color: #23282d;
+}
+
+.tirtonic-section .description {
+    margin-bottom: 20px;
+    color: #666;
+}
+
+.tirtonic-style-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+    margin-top: 20px;
+}
+
+.style-group {
+    background: #f9f9f9;
+    padding: 20px;
+    border-radius: 4px;
+    border: 1px solid #e5e5e5;
+}
+
+.style-group h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 16px;
+    color: #23282d;
+}
+
+.rgba-color-picker {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.rgba-color-picker .color-input {
+    width: 50px;
+    height: 30px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.rgba-color-picker label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+}
+
+.opacity-slider {
+    width: 100px;
+}
+
+.opacity-value {
+    font-weight: bold;
+    color: #0073aa;
+}
+
+.range-slider {
+    width: 100%;
+    margin: 5px 0;
+}
+
+.range-value {
+    display: inline-block;
+    min-width: 50px;
+    font-weight: bold;
+    color: #0073aa;
+}
+
+.tirtonic-toggle {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+}
+
+.tirtonic-toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.tirtonic-toggle .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 24px;
+}
+
+.tirtonic-toggle .slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+.tirtonic-toggle input:checked + .slider {
+    background-color: #0073aa;
+}
+
+.tirtonic-toggle input:checked + .slider:before {
+    transform: translateX(26px);
+}
+
+.icon-management-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.icon-group {
+    background: #f9f9f9;
+    padding: 20px;
+    border-radius: 4px;
+    border: 1px solid #e5e5e5;
+}
+
+.icon-group h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 16px;
+    color: #23282d;
+}
+
+.icon-selector {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 10px 0;
+}
+
+.current-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+}
+
+.current-icon svg {
+    width: 24px;
+    height: 24px;
+}
+
+.menu-builder {
+    background: #f9f9f9;
+    padding: 20px;
+    border-radius: 4px;
+    border: 1px solid #e5e5e5;
+    margin-bottom: 20px;
+}
+
+.menu-item {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    overflow: hidden;
+}
+
+.menu-item-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 15px;
+    background: #f1f1f1;
+    cursor: move;
+}
+
+.drag-handle {
+    cursor: grab;
+    color: #666;
+    font-size: 16px;
+}
+
+.menu-item-header input {
+    flex: 1;
+}
+
+.toggle-menu-item,
+.remove-menu-item {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 5px;
+}
+
+.remove-menu-item {
+    color: #dc3232;
+}
+
+.menu-item-content {
+    padding: 15px;
+    display: none;
+}
+
+.menu-item-icon {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.responsive-device-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.device-tab {
+    padding: 8px 16px;
+    background: #f1f1f1;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.device-tab.active {
+    background: #0073aa;
+    color: #fff;
+    border-color: #0073aa;
+}
+
+.device-settings {
+    display: none;
+}
+
+.device-settings.active {
+    display: block;
+}
+
+.preview-container {
+    background: #f9f9f9;
+    border: 1px solid #e5e5e5;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.preview-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 15px;
+    background: #fff;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.preview-device {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 8px 12px;
+    background: #f1f1f1;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.preview-device.active {
+    background: #0073aa;
+    color: #fff;
+    border-color: #0073aa;
+}
+
+.preview-frame {
+    height: 500px;
+    background: #fff;
+}
+
+.preview-frame iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+.tirtonic-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 100000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background: #fff;
+    border-radius: 4px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background: #f1f1f1;
+    border-bottom: 1px solid #ccd0d4;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #666;
+}
+
+.modal-body {
+    padding: 20px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.icon-search {
+    margin-bottom: 20px;
+}
+
+.icon-search input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+}
+
+.icon-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 10px;
+}
+
+.icon-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    padding: 10px;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+}
+
+.icon-item:hover {
+    background: #f1f1f1;
+    border-color: #0073aa;
+}
+
+.icon-item svg {
+    width: 24px;
+    height: 24px;
+}
+
+.icon-item span {
+    font-size: 11px;
+    color: #666;
+}
+
+.additional-icon-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    margin-bottom: 10px;
+}
+
+.icon-preview {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f9f9f9;
+    border: 1px solid #e5e5e5;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.icon-fields {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.icon-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.tirtonic-admin-footer {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #e5e5e5;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.css-guide {
+    background: #f9f9f9;
+    padding: 15px;
+    border-radius: 4px;
+    margin-top: 15px;
+}
+
+.css-guide h4 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+.css-guide ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.css-guide li {
+    margin-bottom: 5px;
+    font-size: 13px;
+}
+
+.css-guide code {
+    background: #fff;
+    padding: 2px 4px;
+    border-radius: 2px;
+    font-size: 12px;
+}
+
+.update-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#update-status {
+    margin-top: 10px;
+    padding: 10px;
+    border-radius: 4px;
+    display: none;
+}
+
+#update-status.success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+#update-status.error {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .tirtonic-admin-container {
+        flex-direction: column;
+    }
+    
+    .tirtonic-admin-sidebar {
+        width: 100%;
+    }
+    
+    .tirtonic-admin-nav ul {
+        display: flex;
+        overflow-x: auto;
+    }
+    
+    .tirtonic-admin-nav li {
+        border-bottom: none;
+        border-right: 1px solid #ccd0d4;
+        flex-shrink: 0;
+    }
+    
+    .tirtonic-admin-nav li:last-child {
+        border-right: none;
+    }
+    
+    .tirtonic-style-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .icon-management-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .tirtonic-admin-footer {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .tirtonic-admin-footer .button {
+        text-align: center;
+    }
+    
+    .icon-grid {
+        grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+    }
+    
+    .additional-icon-item {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .icon-fields {
+        width: 100%;
+    }
+}
