@@ -273,8 +273,12 @@
         max-width: 90vw !important;
         transform-origin: bottom center;
         z-index: 999 !important;
-        pointer-events: auto !important;
+        pointer-events: none !important;
         visibility: visible !important;
+    }
+    
+    .tirtonic-floating-nav .tirtonic-nav-header {
+        pointer-events: auto !important;
     }
     
     .tirtonic-floating-nav.nav-hidden .tirtonic-nav-header {
@@ -324,6 +328,7 @@
         display: flex !important;
         align-items: center !important;
         min-width: fit-content !important;
+        pointer-events: auto !important;
     }
     
     .tirtonic-nav-toggle {
