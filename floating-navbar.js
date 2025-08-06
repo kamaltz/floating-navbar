@@ -92,9 +92,10 @@ class TirtonicFloatingNav {
             });
         }
         
-        // Close when clicking outside
+        // Close when clicking outside (but not on mobile fullscreen)
         document.addEventListener('click', (e) => {
-            if (!this.nav.contains(e.target)) {
+            const mobileContent = document.getElementById('mobile-fullscreen-content');
+            if (!this.nav.contains(e.target) && (!mobileContent || !mobileContent.contains(e.target))) {
                 this.close();
             }
         });
@@ -276,6 +277,11 @@ class TirtonicFloatingNav {
             
             // Add event listeners for mobile
             this.bindMobileEvents(fullscreenContent);
+            
+            // Prevent closing when clicking inside mobile content
+            fullscreenContent.addEventListener('click', (e) => {
+                e.stopPropagation();
+            });
         } else {
             document.body.style.overflow = 'hidden';
         }
@@ -768,6 +774,7 @@ class TirtonicFloatingNav {
         fullscreenContent.querySelectorAll('.qty-plus, .qty-minus').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 const isPlus = e.target.classList.contains('qty-plus');
                 const quantitySpan = e.target.parentElement.querySelector('.quantity');
                 const currentQty = parseInt(quantitySpan.textContent);
@@ -776,6 +783,18 @@ class TirtonicFloatingNav {
                 this.updateCartCount();
             });
         });
+        
+        // Checkout button
+        const checkoutBtn = fullscreenContent.querySelector('.wishlist-checkout-btn');
+        if (checkoutBtn) {
+            checkoutBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const settings = JSON.parse(this.nav.getAttribute('data-settings') || '{}');
+                const action = settings.checkout_button_action || 'checkout';
+                this.handleCheckoutAction(action, [], settings);
+            });
+        }
         
         // Search functionality
         const searchInput = fullscreenContent.querySelector('#search--revamp input');
