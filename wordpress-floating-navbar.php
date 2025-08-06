@@ -550,6 +550,36 @@ class TirtonicAdvancedFloatingNavbar {
                                     <h3>Menu Settings</h3>
                                     <table class="form-table">
                                         <tr>
+                                            <th scope="row">Show Logo</th>
+                                            <td>
+                                                <label class="tirtonic-toggle">
+                                                    <input type="checkbox" name="show_logo" value="1" <?php checked($this->options['show_logo'] ?? false); ?>>
+                                                    <span class="slider"></span>
+                                                </label>
+                                                <p class="description">Display logo at the top of menu section</p>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th scope="row">Logo Image</th>
+                                            <td>
+                                                <div class="logo-upload-section">
+                                                    <div class="logo-preview">
+                                                        <?php if (!empty($this->options['logo_url'])): ?>
+                                                            <img src="<?php echo esc_url($this->options['logo_url']); ?>" alt="Logo" style="max-width: 120px; max-height: 40px; object-fit: contain;">
+                                                        <?php else: ?>
+                                                            <div class="no-logo-placeholder" style="width: 120px; height: 40px; background: #f0f0f0; display: flex; align-items: center; justify-content: center; color: #666; font-size: 12px;">No Logo</div>
+                                                        <?php endif; ?>
+                                                    </div>
+                                                    <div class="logo-controls" style="margin-top: 10px;">
+                                                        <button type="button" class="button upload-logo-btn">Upload Logo</button>
+                                                        <button type="button" class="button remove-logo-btn" style="margin-left: 10px;">Remove Logo</button>
+                                                        <input type="hidden" name="logo_url" value="<?php echo esc_attr($this->options['logo_url'] ?? ''); ?>">
+                                                    </div>
+                                                    <p class="description">Upload a logo image (recommended size: 120x40px)</p>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr>
                                             <th scope="row">Menu Style</th>
                                             <td>
                                                 <select name="menu_style" class="regular-text">
@@ -1230,6 +1260,34 @@ class TirtonicAdvancedFloatingNavbar {
             // Remove additional icon
             $(document).on('click', '.remove-icon', function() {
                 $(this).closest('.additional-icon-item').remove();
+            });
+            
+            // Logo upload functionality
+            $('.upload-logo-btn').on('click', function() {
+                const frame = wp.media({
+                    title: 'Select Logo',
+                    button: {
+                        text: 'Use this logo'
+                    },
+                    multiple: false,
+                    library: {
+                        type: 'image'
+                    }
+                });
+                
+                frame.on('select', function() {
+                    const attachment = frame.state().get('selection').first().toJSON();
+                    $('input[name="logo_url"]').val(attachment.url);
+                    $('.logo-preview').html('<img src="' + attachment.url + '" alt="Logo" style="max-width: 120px; max-height: 40px; object-fit: contain;">');
+                });
+                
+                frame.open();
+            });
+            
+            // Remove logo
+            $('.remove-logo-btn').on('click', function() {
+                $('input[name="logo_url"]').val('');
+                $('.logo-preview').html('<div class="no-logo-placeholder" style="width: 120px; height: 40px; background: #f0f0f0; display: flex; align-items: center; justify-content: center; color: #666; font-size: 12px;">No Logo</div>');
             });
             
             // Exclude pages default values
@@ -2600,6 +2658,8 @@ class TirtonicAdvancedFloatingNavbar {
         // Menu settings
         $sanitized['menu_style'] = sanitize_text_field($settings['menu_style'] ?? 'simple');
         $sanitized['show_menu_icons'] = !empty($settings['show_menu_icons']);
+        $sanitized['show_logo'] = !empty($settings['show_logo']);
+        $sanitized['logo_url'] = esc_url_raw($settings['logo_url'] ?? '');
         
         // Footer menu
         $sanitized['footer_menu_1_title'] = sanitize_text_field($settings['footer_menu_1_title'] ?? '');
@@ -2752,6 +2812,11 @@ class TirtonicAdvancedFloatingNavbar {
                 </div>
                 
                 <div class="wrapper-menu">
+                    <?php if (!empty($this->options['show_logo']) && !empty($this->options['logo_url'])): ?>
+                    <div class="tirtonic-nav-logo">
+                        <img src="<?php echo esc_url($this->options['logo_url']); ?>" alt="Logo">
+                    </div>
+                    <?php endif; ?>
                     <div class="quick--access-content_link1">
                         <?php $this->render_menu_items(); ?>
                     </div>

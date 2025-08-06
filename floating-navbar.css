@@ -312,6 +312,9 @@
     }
     
     .tirtonic-nav-actions {
+        position: static !important;
+        margin: 0 !important;
+        width: auto !important;
         gap: 2vw !important;
         flex-shrink: 0 !important;
         display: flex !important;
@@ -323,6 +326,9 @@
         flex: 1 !important;
         min-width: 0 !important;
         margin-right: 2vw !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 1.5vw !important;
     }
     
     .tirtonic-nav-search,
@@ -331,6 +337,13 @@
         flex-shrink: 0 !important;
         min-width: 8vw !important;
         min-height: 8vw !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        background: rgba(255,255,255,0.2) !important;
+        border-radius: 50% !important;
+        padding: 1vw !important;
+        position: relative !important;
     }
     
     .tirtonic-nav-content {
@@ -516,6 +529,20 @@
     height: auto;
     max-height: 40px;
     object-fit: contain;
+    display: block;
+    margin: 0 auto;
+}
+
+.tirtonic-nav-logo.hidden {
+    display: none;
+}
+
+/* Mobile logo adjustments */
+@media only screen and (max-width: 768px) {
+    .tirtonic-nav-logo img {
+        max-width: 150px;
+        max-height: 50px;
+    }
 }
 
 /* Enhanced Features Styling - Exact orpcatalog.id Search */

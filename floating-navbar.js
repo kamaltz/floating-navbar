@@ -226,6 +226,14 @@ class TirtonicFloatingNav {
             // Clone the entire content to preserve all elements
             fullscreenContent.innerHTML = content.cloneNode(true).innerHTML;
             
+            // Ensure logo is visible in mobile view
+            const logoElement = fullscreenContent.querySelector('.tirtonic-nav-logo');
+            if (logoElement) {
+                logoElement.style.display = 'block';
+                logoElement.style.textAlign = 'center';
+                logoElement.style.marginBottom = '20px';
+            }
+            
             fullscreenContent.style.cssText = `
                 position: fixed !important;
                 top: 0 !important;
