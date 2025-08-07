@@ -12,6 +12,9 @@ class TirtonicFloatingNav {
         this.currentView = 'menu'; // menu, search, cart
         this.scrollThreshold = 100;
         this.hideDelay = 2000;
+        this.isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+        this.isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        this.isMobile = window.innerWidth <= 768;
         
         this.init();
     }
@@ -31,8 +34,10 @@ class TirtonicFloatingNav {
             return;
         }
         
+        this.applySafariCompatibility();
         this.bindEvents();
         this.setupIntersectionObserver();
+        this.setupTouchHandlers();
     }
     
     bindEvents() {
@@ -41,17 +46,26 @@ class TirtonicFloatingNav {
             return;
         }
         
-        // Scroll event dengan throttling
+        // Scroll event dengan throttling - Safari optimized
         let ticking = false;
-        window.addEventListener('scroll', () => {
+        const scrollHandler = () => {
             if (!ticking) {
-                requestAnimationFrame(() => {
-                    this.handleScroll();
-                    ticking = false;
-                });
+                if (this.isSafari) {
+                    setTimeout(() => {
+                        this.handleScroll();
+                        ticking = false;
+                    }, 16);
+                } else {
+                    requestAnimationFrame(() => {
+                        this.handleScroll();
+                        ticking = false;
+                    });
+                }
                 ticking = true;
             }
-        });
+        };
+        
+        window.addEventListener('scroll', scrollHandler, { passive: true });
         
         // Quick Access Menu - toggle menu dropdown
         const toggle = this.nav.querySelector('.tirtonic-nav-toggle');
@@ -149,6 +163,58 @@ class TirtonicFloatingNav {
         
         // Update cart count on page load
         this.updateCartCount();
+        
+        // iOS specific fixes
+        if (this.isIOS) {
+            this.applyIOSFixes();
+        }
+    }
+    
+    applySafariCompatibility() {
+        if (!this.nav) return;
+        
+        if (this.isSafari) {
+            this.nav.classList.add('safari-browser');
+        }
+        
+        if (this.isIOS) {
+            this.nav.classList.add('ios-device');
+            const inputs = this.nav.querySelectorAll('input');
+            inputs.forEach(input => {
+                input.style.fontSize = '16px';
+            });
+        }
+        
+        this.nav.style.transform = 'translateZ(0)';
+        this.nav.style.webkitTransform = 'translateZ(0)';
+        this.nav.style.webkitBackfaceVisibility = 'hidden';
+    }
+    
+    setupTouchHandlers() {
+        if (!this.isMobile) return;
+        
+        const toggle = this.nav.querySelector('.tirtonic-nav-toggle');
+        const searchBtn = this.nav.querySelector('.tirtonic-nav-search');
+        const cartBtn = this.nav.querySelector('.tirtonic-nav-cart');
+        
+        [toggle, searchBtn, cartBtn].forEach(btn => {
+            if (btn) {
+                btn.addEventListener('touchstart', (e) => {
+                    btn.style.transform = 'scale(0.95)';
+                }, { passive: true });
+                
+                btn.addEventListener('touchend', (e) => {
+                    btn.style.transform = 'scale(1)';
+                }, { passive: true });
+            }
+        });
+    }
+    
+    applyIOSFixes() {
+        const viewport = document.querySelector('meta[name=viewport]');
+        if (viewport) {
+            viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover');
+        }
     }
     
     handleScroll() {
@@ -245,21 +311,29 @@ class TirtonicFloatingNav {
                 logoElement.style.marginBottom = '20px';
             }
             
+            const safeAreaTop = this.isIOS ? 'env(safe-area-inset-top, 0px)' : '0px';
+            const safeAreaBottom = this.isIOS ? 'env(safe-area-inset-bottom, 0px)' : '0px';
+            const safeAreaLeft = this.isIOS ? 'env(safe-area-inset-left, 0px)' : '0px';
+            const safeAreaRight = this.isIOS ? 'env(safe-area-inset-right, 0px)' : '0px';
+            
             fullscreenContent.style.cssText = `
                 position: fixed !important;
-                top: 0 !important;
-                left: 0 !important;
-                right: 0 !important;
-                bottom: 0 !important;
-                width: 100vw !important;
-                height: 100vh !important;
+                top: ${safeAreaTop} !important;
+                left: ${safeAreaLeft} !important;
+                right: ${safeAreaRight} !important;
+                bottom: ${safeAreaBottom} !important;
+                width: calc(100vw - ${safeAreaLeft} - ${safeAreaRight}) !important;
+                height: calc(100vh - ${safeAreaTop} - ${safeAreaBottom}) !important;
                 z-index: 9999 !important;
                 background: white !important;
                 padding: 60px 20px 20px 20px !important;
                 overflow: auto !important;
+                -webkit-overflow-scrolling: touch !important;
                 transform: translateY(0) !important;
+                -webkit-transform: translateY(0) !important;
                 opacity: 1 !important;
                 visibility: visible !important;
+                -webkit-backface-visibility: hidden !important;
             `;
             
             document.body.appendChild(fullscreenContent);
@@ -1124,12 +1198,23 @@ if (typeof window !== 'undefined') {
     window.updateCartCount = updateCartCount;
 }
 
-// Initialize
+// Safari-compatible initialization
+function safariCompatibleInit() {
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    
+    if (isSafari || isIOS) {
+        setTimeout(initTirtonicNav, 200);
+    } else {
+        initTirtonicNav();
+    }
+}
+
+// Initialize with Safari compatibility
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initTirtonicNav);
+    document.addEventListener('DOMContentLoaded', safariCompatibleInit);
 } else if (document.readyState === 'interactive' || document.readyState === 'complete') {
-    initTirtonicNav();
+    safariCompatibleInit();
 } else {
-    // Fallback
-    window.addEventListener('load', initTirtonicNav);
+    window.addEventListener('load', safariCompatibleInit);
 }

@@ -3915,21 +3915,63 @@ class TirtonicAdvancedFloatingNavbar {
             }
         }
         
+        /* Safari Compatibility Fixes */
+        .tirtonic-floating-nav {
+            -webkit-transform: scale(var(--tirtonic-scale));
+            -webkit-transform-origin: top right;
+            -webkit-transition: .5s ease;
+            -webkit-backface-visibility: hidden;
+            -webkit-perspective: 1000;
+        }
+        
+        .tirtonic-nav-header {
+            -webkit-transform: translateZ(0);
+            -webkit-backface-visibility: hidden;
+        }
+        
+        .tirtonic-nav-content {
+            -webkit-transform: translateY(-20px);
+            -webkit-transition: all .3s ease;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .tirtonic-nav-opened .tirtonic-nav-content {
+            -webkit-transform: translateY(0);
+        }
+        
+        /* iOS Safari specific fixes */
+        @supports (-webkit-touch-callout: none) {
+            .tirtonic-floating-nav {
+                -webkit-tap-highlight-color: transparent;
+            }
+            
+            .tirtonic-nav-header {
+                -webkit-user-select: none;
+                -webkit-touch-callout: none;
+            }
+            
+            .tirtonic-nav-content {
+                -webkit-overflow-scrolling: touch;
+                overflow: auto;
+            }
+        }
+        
         /* Mobile Responsive */
         @media only screen and (max-width: 767px) {
             .tirtonic-floating-nav {
                 <?php if (($this->options['mobile_position'] ?? 'bottom') === 'top'): ?>
-                top: 3.142vh;
+                top: max(3.142vh, env(safe-area-inset-top));
                 bottom: auto;
                 <?php else: ?>
-                bottom: 3.142vh;
+                bottom: max(3.142vh, env(safe-area-inset-bottom));
                 top: auto;
                 <?php endif; ?>
-                left: 0;
-                right: 0;
-                width: calc(100% - 17.812vw);
+                left: env(safe-area-inset-left);
+                right: env(safe-area-inset-right);
+                width: calc(100% - 17.812vw - env(safe-area-inset-left) - env(safe-area-inset-right));
                 margin: auto;
                 z-index: 99998;
+                -webkit-transform: scale(<?php echo ($this->options['mobile_scale'] ?? 80) / 100; ?>);
                 transform: scale(<?php echo ($this->options['mobile_scale'] ?? 80) / 100; ?>);
             }
         }
@@ -3960,17 +4002,19 @@ class TirtonicAdvancedFloatingNavbar {
         
         @media only screen and (max-width: 768px) {
             .tirtonic-floating-nav {
-                bottom: 3.142vh;
-                left: 0;
-                right: 0;
+                bottom: max(3.142vh, env(safe-area-inset-bottom));
+                left: env(safe-area-inset-left);
+                right: env(safe-area-inset-right);
                 top: auto;
-                width: calc(100% - 17.812vw);
+                width: calc(100% - 17.812vw - env(safe-area-inset-left) - env(safe-area-inset-right));
                 margin: auto;
                 z-index: 99998;
             }
             
             .tirtonic-floating-nav.nav-hidden {
+                -webkit-transform: translateY(100%);
                 transform: translateY(100%);
+                -webkit-transition: transform 0.3s ease;
                 transition: transform 0.3s ease;
             }
             
@@ -4022,25 +4066,29 @@ class TirtonicAdvancedFloatingNavbar {
             
             .tirtonic-nav-content {
                 position: fixed;
-                top: 0;
-                right: 0;
-                bottom: 0;
-                left: 0;
+                top: env(safe-area-inset-top);
+                right: env(safe-area-inset-right);
+                bottom: env(safe-area-inset-bottom);
+                left: env(safe-area-inset-left);
                 padding: 9.507vh 8.906vw;
-                padding-bottom: 18.723vh;
+                padding-bottom: max(18.723vh, env(safe-area-inset-bottom));
+                -webkit-transform: translateY(100%);
                 transform: translateY(100%);
                 opacity: 0;
                 visibility: hidden;
                 overflow: auto;
+                -webkit-overflow-scrolling: touch;
                 max-height: 100vh;
                 border-radius: 0;
                 z-index: 99997;
                 background: var(--tirtonic-background);
+                -webkit-transition: transform 0.3s ease;
                 transition: transform 0.3s ease;
                 display: none;
             }
             
             .tirtonic-nav-opened .tirtonic-nav-content {
+                -webkit-transform: translateY(0);
                 transform: translateY(0);
                 opacity: 1;
                 visibility: visible;
@@ -4105,6 +4153,33 @@ class TirtonicAdvancedFloatingNavbar {
             #search--revamp .close--icon svg {
                 width: 2vw;
                 height: 2vw;
+            }
+        }
+        
+        /* Cross-browser compatibility */
+        .tirtonic-floating-nav * {
+            -webkit-box-sizing: border-box;
+            -moz-box-sizing: border-box;
+            box-sizing: border-box;
+        }
+        
+        /* High DPI displays */
+        @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+            .tirtonic-nav-header {
+                -webkit-font-smoothing: antialiased;
+                -moz-osx-font-smoothing: grayscale;
+            }
+        }
+        
+        /* Landscape orientation fixes */
+        @media screen and (orientation: landscape) and (max-height: 500px) {
+            .tirtonic-floating-nav {
+                -webkit-transform: scale(0.8);
+                transform: scale(0.8);
+            }
+            
+            .tirtonic-nav-content {
+                max-height: 90vh;
             }
         }
         </style>
