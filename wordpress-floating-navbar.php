@@ -2987,7 +2987,7 @@ class TirtonicAdvancedFloatingNavbar {
             position: fixed;
             top: 6.13vh;
             right: 6.614vw;
-            transition: .5s ease;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
             z-index: var(--tirtonic-z-index);
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             transform: scale(var(--tirtonic-scale));
@@ -2998,7 +2998,9 @@ class TirtonicAdvancedFloatingNavbar {
         }
         
         .tirtonic-floating-nav.nav-hidden {
-            transform: translateY(calc(-100% - 7.13vh));
+            transform: scale(var(--tirtonic-scale)) translateY(-100%);
+            opacity: 0;
+            pointer-events: none;
         }
         
         .tirtonic-floating-nav.top-left {
@@ -4012,10 +4014,12 @@ class TirtonicAdvancedFloatingNavbar {
             }
             
             .tirtonic-floating-nav.nav-hidden {
-                -webkit-transform: translateY(100%);
-                transform: translateY(100%);
-                -webkit-transition: transform 0.3s ease;
-                transition: transform 0.3s ease;
+                -webkit-transform: scale(<?php echo ($this->options['mobile_scale'] ?? 80) / 100; ?>) translateY(100%);
+                transform: scale(<?php echo ($this->options['mobile_scale'] ?? 80) / 100; ?>) translateY(100%);
+                opacity: 0;
+                -webkit-transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+                pointer-events: none;
             }
             
             .tirtonic-nav-header {

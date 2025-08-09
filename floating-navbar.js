@@ -31,11 +31,13 @@ class TirtonicFloatingNav {
     setup() {
         this.nav = document.getElementById('tirtonicFloatingNav');
         if (!this.nav) {
+            setTimeout(() => this.setup(), 500);
             return;
         }
         
         this.applySafariCompatibility();
         this.bindEvents();
+        this.setupScrollHandler();
         this.setupIntersectionObserver();
         this.setupTouchHandlers();
     }
@@ -170,6 +172,36 @@ class TirtonicFloatingNav {
         }
     }
     
+    setupScrollHandler() {
+        let lastScrollY = 0;
+        let ticking = false;
+        
+        const handleScroll = () => {
+            const navbar = document.getElementById('tirtonicFloatingNav');
+            if (!navbar) return;
+            
+            const currentScrollY = window.scrollY;
+            
+            if (currentScrollY > lastScrollY && currentScrollY > 100) {
+                // Scrolling down - hide
+                navbar.style.transform = 'translateY(-100%)';
+            } else if (currentScrollY < lastScrollY) {
+                // Scrolling up - show
+                navbar.style.transform = 'translateY(0)';
+            }
+            
+            lastScrollY = currentScrollY;
+            ticking = false;
+        };
+        
+        window.addEventListener('scroll', () => {
+            if (!ticking) {
+                requestAnimationFrame(handleScroll);
+                ticking = true;
+            }
+        }, { passive: true });
+    }
+    
     applySafariCompatibility() {
         if (!this.nav) return;
         
@@ -218,6 +250,24 @@ class TirtonicFloatingNav {
     }
     
     handleScroll() {
+        // Exit immediately if navbar doesn't exist
+        if (!this.nav) {
+            return;
+        }
+        
+        // Double check navbar still exists in DOM
+        const navElement = document.getElementById('tirtonicFloatingNav');
+        if (!navElement) {
+            this.nav = null;
+            return;
+        }
+        
+        // Update reference if needed
+        if (this.nav !== navElement) {
+            this.nav = navElement;
+        }
+        
+        // Final safety check
         if (!this.nav || !this.nav.classList) {
             return;
         }
@@ -481,22 +531,26 @@ class TirtonicFloatingNav {
     }
     
     show() {
-        this.nav.classList.remove('nav-hidden');
+        if (this.nav && this.nav.classList) {
+            this.nav.classList.remove('nav-hidden');
+        }
     }
     
     hide() {
-        this.nav.classList.add('nav-hidden');
+        if (this.nav && this.nav.classList) {
+            this.nav.classList.add('nav-hidden');
+        }
     }
     
     showWithTransition() {
-        if (this.nav.classList.contains('nav-hidden')) {
+        if (this.nav && this.nav.classList && this.nav.classList.contains('nav-hidden')) {
             this.nav.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease';
             this.nav.classList.remove('nav-hidden');
         }
     }
     
     hideWithTransition() {
-        if (!this.nav.classList.contains('nav-hidden')) {
+        if (this.nav && this.nav.classList && !this.nav.classList.contains('nav-hidden')) {
             this.nav.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease';
             this.nav.classList.add('nav-hidden');
         }
