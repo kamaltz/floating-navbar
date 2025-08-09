@@ -10,7 +10,7 @@ class TirtonicFloatingNav {
         this.navTimeout = null;
         this.isOpen = false;
         this.currentView = 'menu'; // menu, search, cart
-        this.scrollThreshold = 100;
+        this.scrollThreshold = 80;
         this.hideDelay = 2000;
         this.isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
         this.isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
@@ -218,24 +218,27 @@ class TirtonicFloatingNav {
     }
     
     handleScroll() {
-        // Exit early if nav element doesn't exist
         if (!this.nav || !this.nav.classList) {
             return;
         }
         
         const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        const scrollDelta = Math.abs(scrollTop - this.lastScrollTop);
         
         clearTimeout(this.navTimeout);
         
-        // Don't hide if nav is open
-        if (this.isOpen) return;
+        // Don't hide if nav is open or scroll delta is too small
+        if (this.isOpen || scrollDelta < 5) {
+            this.lastScrollTop = scrollTop;
+            return;
+        }
         
         if (scrollTop > this.lastScrollTop && scrollTop > this.scrollThreshold) {
-            // Scrolling down - hide nav
-            this.hide();
-        } else {
-            // Scrolling up - show nav
-            this.show();
+            // Scrolling down - hide nav with smooth transition
+            this.hideWithTransition();
+        } else if (scrollTop < this.lastScrollTop) {
+            // Scrolling up - show nav with smooth transition
+            this.showWithTransition();
         }
         
         this.lastScrollTop = scrollTop;
@@ -243,9 +246,9 @@ class TirtonicFloatingNav {
         // Auto show after scroll stops
         this.navTimeout = setTimeout(() => {
             if (!this.isOpen && this.nav && this.nav.classList) {
-                this.show();
+                this.showWithTransition();
             }
-        }, this.hideDelay);
+        }, 1500);
     }
     
     setupIntersectionObserver() {
@@ -483,6 +486,20 @@ class TirtonicFloatingNav {
     
     hide() {
         this.nav.classList.add('nav-hidden');
+    }
+    
+    showWithTransition() {
+        if (this.nav.classList.contains('nav-hidden')) {
+            this.nav.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease';
+            this.nav.classList.remove('nav-hidden');
+        }
+    }
+    
+    hideWithTransition() {
+        if (!this.nav.classList.contains('nav-hidden')) {
+            this.nav.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease';
+            this.nav.classList.add('nav-hidden');
+        }
     }
     
 
